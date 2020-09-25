@@ -4,15 +4,23 @@ This is a simple Powershell script to allow you to create backups of VirtualBox 
 
 .DESCRIPTION
 The script is using the command line interface of VirtualBox named VBoxManage to do the starting and stopping of the VM's and the creation of the exported OVA files. 
-It is as well required to have 7-Zip installed on the computer. It uses 7-Zip to compress the backupped directory. The command line argument Compress-Archive is not 
+It is as well required to have 7-Zip installed on the computer. 
+
+It uses 7-Zip to compress the backupped directory. The command line argument Compress-Archive is not 
 supported as the output files are most likely larger than 2GB. Because of a .NET limitation zip archives larger then 2GB are not supported yet because of Zip64 not being 
 implemented in .NET yet. 
+
+Make sure to use StartAfterBackup if you plan to stop the VM, make a backup and start the VM. This is so that you are able to make backups of machines that are offline
+and should stay offline.
 
 .EXAMPLE
 .\Backup-VirtualBox.ps1 -VM 'TESTVM' -Destination D:\Test\TESTVM -Verbose
 
 .EXAMPLE
 .\Backup-VirtualBox.ps1 -VM 'TESTVM' -Destination D:\Test\TESTVM -Compress -Verbose
+
+.EXAMPLE
+.\Backup-VirtualBox.ps1 -VM 'TESTVM' -Destination D:\Test\TESTVM -Compress -StartAfterBackup -Verbose
 
 .LINK
 https://www.techrepublic.com/article/how-to-import-and-export-virtualbox-appliances-from-the-command-line/
