@@ -28,7 +28,8 @@ Param
 (
     [Parameter(Mandatory=$true)][String]$VM = "",
     [Parameter(Mandatory=$true)][String]$Destination = "C:\Users\" + $env:UserName + "\Documents\",
-    [Switch]$Compress
+    [Switch]$Compress,
+    [Switch]$StartAfterBackup
 )
 
 function Create-7Zip([String] $aDirectory, [String] $aZipfile){
@@ -88,8 +89,11 @@ While(Get-RunningVirtualBox($VM))
 Write-Verbose "Exporting the VM appliance of $VM as $OVA"
 Start-Process $VBoxManage -ArgumentList "export $VM -o $OVA" -Wait -WindowStyle Hidden
 
-Write-Verbose "Starting $VM"
-Start-Process $VBoxManage -ArgumentList "startvm $VM" -Wait -WindowStyle Hidden
+if ($StartAfterBackup)
+{
+    Write-Verbose "Starting $VM"
+    Start-Process $VBoxManage -ArgumentList "startvm $VM" -Wait -WindowStyle Hidden
+}
 
 if ($Compress)
 {
