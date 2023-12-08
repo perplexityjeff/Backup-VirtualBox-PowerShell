@@ -41,7 +41,7 @@ Param
 )
 
 function Create-7Zip([String] $aDirectory, [String] $aZipfile){
-    [string]$pathToZipExe = "$($Env:ProgramFiles)-Zipz.exe";
+    [string]$pathToZipExe = "$($Env:ProgramFiles)\7-Zip\7z.exe";
     [Array]$arguments = "a", "-tzip", "$aZipfile", "$aDirectory", "-r";
     & $pathToZipExe $arguments;
 }
@@ -72,9 +72,10 @@ function Get-RunningVirtualBox($VM)
 $Date = Get-Date -format "yyyyMMdd"
 $VBoxManage = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
 $OVA = "$VM-$Date.ova"
+$OVAPath = $PSScriptRoot + "\" + $OVA
 
 Write-Verbose "Stopping $VM"
-Start-Process $VBoxManage -ArgumentList "controlvm $VM acpipowerbutton" -Wait -WindowStyle Hidden
+Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" poweroff" -Wait -WindowStyle Hidden
 
 Write-Verbose "Testing if $Destination exists, if not then create it"
 if (-Not(Test-Path $Destination))
@@ -83,9 +84,9 @@ if (-Not(Test-Path $Destination))
 }
 
 Write-Verbose "Checking if $OVA already exists and removing it before beginning"
-if (Test-Path $OVA)
+if (Test-Path $OVAPath)
 {
-    Remove-Item $OVA -Force -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+    Remove-Item $OVAPath -Force -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
 }
 
 Write-Verbose "Waiting for $VM to have stopped"
@@ -95,12 +96,12 @@ While(Get-RunningVirtualBox($VM))
 }
 
 Write-Verbose "Exporting the VM appliance of $VM as $OVA"
-Start-Process $VBoxManage -ArgumentList "export $VM -o $OVA" -Wait -WindowStyle Hidden
+Start-Process $VBoxManage -ArgumentList "export ""$VM"" -o ""$OVAPath""" -Wait -WindowStyle Hidden
 
 if ($StartAfterBackup)
 {
     Write-Verbose "Starting $VM"
-    Start-Process $VBoxManage -ArgumentList "startvm $VM" -Wait -WindowStyle Hidden
+    Start-Process $VBoxManage -ArgumentList "startvm ""$VM"" -type headless" -Wait -WindowStyle Hidden
 }
 
 if ($Compress)
@@ -114,15 +115,15 @@ if ($Compress)
     }
 
     Write-Verbose "Starting the compression of $OVA to $DestinationCompress"
-    Create-7Zip ($PSScriptRoot + "\" + $OVA) $DestinationCompress
+    Create-7Zip ($OVAPath) $DestinationCompress
 
-    Write-Verbose "Removing ($PSScriptRoot + "\" + $OVA) because of completed compression"
-    Remove-Item ($PSScriptRoot + "\" + $OVA) -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+    Write-Verbose "Removing $OVAPath because of completed compression"
+    Remove-Item ($OVAPath) -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
 }
 else
 {
     Write-Verbose "Copying the exported $OVA to $Destination"
-    Copy-Item ($PSScriptRoot + "\" + $OVA) -Destination ($Destination + "\" + $OVA) -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+    Copy-Item ($OVAPath) -Destination "($Destination + "\" + $OVA)" -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
 }
 
 Write-Verbose "Completed the Backup"
