@@ -124,6 +124,9 @@ else
 {
     Write-Verbose "Copying the exported $OVA to $Destination"
     Copy-Item ($OVAPath) -Destination "($Destination + "\" + $OVA)" -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+	
+	Write-Verbose "Removing $OVAPath because of completed copy"
+    Remove-Item ($OVAPath) -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
 }
 
 Write-Verbose "Completed the Backup"
