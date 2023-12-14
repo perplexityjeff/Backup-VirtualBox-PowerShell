@@ -75,7 +75,7 @@ $OVA = "$VM-$Date.ova"
 $OVAPath = $PSScriptRoot + "\" + $OVA
 
 Write-Verbose "Stopping $VM"
-Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" poweroff" -Wait -WindowStyle Hidden
+Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" acpipowerbutton" -Wait -WindowStyle Hidden
 
 Write-Verbose "Testing if $Destination exists, if not then create it"
 if (-Not(Test-Path $Destination))
@@ -125,7 +125,7 @@ else
     Write-Verbose "Copying the exported $OVA to $Destination"
     Copy-Item ($OVAPath) -Destination "($Destination + "\" + $OVA)" -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
 	
-	Write-Verbose "Removing $OVAPath because of completed copy"
+    Write-Verbose "Removing $OVAPath because of completed copy"
     Remove-Item ($OVAPath) -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
 }
 
