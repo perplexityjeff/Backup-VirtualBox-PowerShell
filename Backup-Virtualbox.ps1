@@ -38,7 +38,8 @@ Param
     [Parameter(Mandatory=$true)][String]$VM = "",
     [Parameter(Mandatory=$true)][String]$Destination = "C:\Users\" + $env:UserName + "\Documents\",
     [Switch]$Compress,
-    [Switch]$StartAfterBackup
+    [Switch]$StartAfterBackup,
+    [switch]$Force = $False
 )
 
 function Create-7Zip([String] $aDirectory, [String] $aZipfile){
@@ -76,7 +77,14 @@ $OVA = "$VM-$Date.ova"
 $OVAPath = $PSScriptRoot + "\" + $OVA
 
 Write-Verbose "Stopping $VM"
-Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" acpipowerbutton" -Wait -WindowStyle Hidden
+if ($Force)
+{
+    Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" poweroff" -Wait -WindowStyle Hidden
+}
+else
+{
+    Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" acpipowerbutton" -Wait -WindowStyle Hidden
+}
 
 Write-Verbose "Testing if $Destination exists, if not then create it"
 if (-Not(Test-Path $Destination))
