@@ -76,13 +76,14 @@ $VBoxManage = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
 $OVA = "$VM-$Date.ova"
 $OVAPath = $PSScriptRoot + "\" + $OVA
 
-Write-Verbose "Stopping $VM"
 if ($Force)
 {
+    Write-Verbose "Stopping $VM, using PowerOff method (Force)"
     Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" poweroff" -Wait -WindowStyle Hidden
 }
 else
 {
+    Write-Verbose "Stopping $VM, using ACPI Power Button method"
     Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" acpipowerbutton" -Wait -WindowStyle Hidden
 }
 
