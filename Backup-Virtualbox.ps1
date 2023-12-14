@@ -29,6 +29,7 @@ https://www.virtualbox.org/manual/ch08.html#vboxmanage-export
 https://stackoverflow.com/questions/49807310/in-powershell-with-a-large-number-of-files-can-you-send-2gb-at-a-time-to-zip-fil
 https://blogs.msdn.microsoft.com/oldnewthing/20180515-00/?p=98755
 https://stackoverflow.com/questions/17461237/how-do-i-get-the-directory-of-the-powershell-script-i-execute
+https://askubuntu.com/questions/42482/how-to-safely-shutdown-guest-os-in-virtualbox-using-command-line
 #>
 
 [cmdletBinding()]
