@@ -5,9 +5,11 @@ They are being exported using the VBoxManage command line that comes with Virtua
 
 ## Usage
 Here is a simple example of the script that you use:
+
 `.\Backup-VirtualBox.ps1 -VM 'VM Test' -Destination D:\Backup -Compress -StartAfterBackup -Verbose`
 
 Please use Get-Help for more examples within the script:
+
 `Get-Help .\Backup-VirtualBox.ps1 -Examples`
 
 ## Parameters
