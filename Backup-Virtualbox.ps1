@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-This is a simple Powershell script to allow you to create backups of VirtualBox VM's using the 'Export to Appliance' command. 
+This is a simple Powershell script to allow you to create backups of VirtualBox VM's using the 'Export to Appliance' command. It uses the VM name as displayed in VirtualBox Manager as the input 
 
 .DESCRIPTION
 The script is using the command line interface of VirtualBox named VBoxManage to do the starting and stopping of the VM's and the creation of the exported OVA files. 
@@ -14,12 +14,23 @@ Make sure to use StartAfterBackup if you plan to stop the VM, make a backup and 
 and should stay offline.
 
 .EXAMPLE
+Basic example to backup the VM to a folder
 .\Backup-VirtualBox.ps1 -VM 'TESTVM' -Destination D:\Test\TESTVM -Verbose
 
 .EXAMPLE
+Basic example to backup the VM to a folder and use zip archiving with 7zip
 .\Backup-VirtualBox.ps1 -VM 'TESTVM' -Destination D:\Test\TESTVM -Compress -Verbose
 
 .EXAMPLE
+Basic example to backup the VM to a folder and use 7z archiving with 7zip
+.\Backup-VirtualBox.ps1 -VM 'TESTVM' -Destination D:\Test\TESTVM -Compress -CompressExtention "7z" -Verbose
+
+.EXAMPLE
+Basic example to backup the VM to a folder and use 7z archiving with 7zip with maximum compression 9 (this can also be 1, 3, 5 (default) or 7)
+.\Backup-VirtualBox.ps1 -VM 'TESTVM' -Destination D:\Test\TESTVM -Compress -CompressExtention "7z" -CompressLevel 9 -Verbose
+
+.EXAMPLE
+Basic example to backup the VM to a folder and start the VM back up after exporting
 .\Backup-VirtualBox.ps1 -VM 'TESTVM' -Destination D:\Test\TESTVM -Compress -StartAfterBackup -Verbose
 
 .LINK
@@ -30,22 +41,36 @@ https://stackoverflow.com/questions/49807310/in-powershell-with-a-large-number-o
 https://blogs.msdn.microsoft.com/oldnewthing/20180515-00/?p=98755
 https://stackoverflow.com/questions/17461237/how-do-i-get-the-directory-of-the-powershell-script-i-execute
 https://askubuntu.com/questions/42482/how-to-safely-shutdown-guest-os-in-virtualbox-using-command-line
+https://www.dotnetperls.com/7-zip-examples
 #>
 
-[cmdletBinding()]
+[CmdletBinding()]
 Param
 (
     [Parameter(Mandatory=$true)][String]$VM = "",
     [Parameter(Mandatory=$true)][String]$Destination = "C:\Users\" + $env:UserName + "\Documents\",
+    [String]$Suffix,
     [Switch]$Compress,
+    [String]$CompressExtension = "zip",
+    [String]$CompressLevel = "5",    
     [Switch]$StartAfterBackup,
     [switch]$Force = $False
 )
 
-function Create-7Zip([String] $aDirectory, [String] $aZipfile){
-    [string]$pathToZipExe = "$($Env:ProgramFiles)\7-Zip\7z.exe";
-    [Array]$arguments = "a", "-tzip", "$aZipfile", "$aDirectory", "-r";
-    & $pathToZipExe $arguments;
+function New-7ZipArchive()
+{
+    Param
+    (
+        [Parameter(Mandatory=$true)][String]$DestinationFile, 
+        [Parameter(Mandatory=$true)][String]$SourceFile, 
+        [Parameter(Mandatory=$true)][String]$Extention, 
+        [Parameter(Mandatory=$true)][String]$Level
+    )
+
+    $7ZipLocation = "$($Env:ProgramFiles)\7-Zip\7z.exe"
+    $7ZipArguments = "a -t" + $Extention + ' "' + $DestinationFile + '" "' + $SourceFile + '" -mx' + $Level
+
+    Start-Process $7ZipLocation -ArgumentList $7ZipArguments -Wait -WindowStyle Hidden
 }
 
 function Get-RunningVirtualBox($VM)
@@ -71,42 +96,51 @@ function Get-RunningVirtualBox($VM)
     }
 }
 
-$Date = Get-Date -format "yyyyMMdd"
+$Date = Get-Date -format "yyyyMMdd-HHmmss"
 $VBoxManage = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
-$OVA = "$VM-$Date.ova"
-$OVAPath = $PSScriptRoot + "\" + $OVA
 
-if ($Force)
+$OVA = "$VM-$Date.ova"
+if ($Suffix)
 {
-    Write-Verbose "Stopping $VM, using PowerOff method (Force)"
-    Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" poweroff" -Wait -WindowStyle Hidden
+    $OVA = "$VM-$Date-$Suffix.ova"
 }
-else
+
+$OVAPath = Join-Path -Path $Destination -ChildPath $OVA
+
+if (Get-RunningVirtualBox($VM))
 {
-    Write-Verbose "Stopping $VM, using ACPI Power Button method"
-    Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" acpipowerbutton" -Wait -WindowStyle Hidden
+    if ($Force)
+    {
+        Write-Verbose "Stopping $VM, using PowerOff method (Force)"
+        Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" poweroff" -Wait -WindowStyle Hidden
+    }
+    else
+    {
+        Write-Verbose "Stopping $VM, using ACPI Power Button method"
+        Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" acpipowerbutton" -Wait -WindowStyle Hidden
+    }
+   
+    While(Get-RunningVirtualBox($VM))
+    {
+        Write-Verbose "Waiting for $VM to have stopped"
+        Start-Sleep -Seconds 1
+    }
 }
 
 Write-Verbose "Testing if $Destination exists, if not then create it"
 if (-Not(Test-Path $Destination))
 {
-    New-Item -Path $Destination -ItemType Directory
+    New-Item -Path $Destination -ItemType Directory | Out-Null
 }
 
 Write-Verbose "Checking if $OVA already exists and removing it before beginning"
 if (Test-Path $OVAPath)
 {
-    Remove-Item $OVAPath -Force -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+    Remove-Item $OVAPath -Force
 }
 
-Write-Verbose "Waiting for $VM to have stopped"
-While(Get-RunningVirtualBox($VM))
-{
-    Start-Sleep -Seconds 1
-}
-
-Write-Verbose "Exporting the VM appliance of $VM as $OVA"
-Start-Process $VBoxManage -ArgumentList "export ""$VM"" -o ""$OVAPath""" -Wait -WindowStyle Hidden
+Write-Verbose "Exporting the VM appliance of $VM as $OVA, be patient this will take a while"
+Start-Process $VBoxManage -ArgumentList "export ""$VM"" -o ""$OVAPath""" -Wait -WindowStyle Hidden -RedirectStandardOutput True
 
 if ($StartAfterBackup)
 {
@@ -116,27 +150,19 @@ if ($StartAfterBackup)
 
 if ($Compress)
 {
-    $DestinationCompress = $Destination + "\" + $OVA.Split('.')[0] + ".zip"
+    $DestinationCompress = Join-Path $Destination -ChildPath ((Get-Item $OVAPath).BaseName + "." + $CompressExtension)
    
     Write-Verbose "Checking if $DestinationCompress already exists and removing it before beginning"
     if (Test-Path $DestinationCompress)
     {
-        Remove-Item $DestinationCompress -Force -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+        Remove-Item $DestinationCompress -Force
     }
 
     Write-Verbose "Starting the compression of $OVA to $DestinationCompress"
-    Create-7Zip ($OVAPath) $DestinationCompress
+    New-7ZipArchive -SourceFile $OVAPath -DestinationFile $DestinationCompress -Extention $CompressExtension -Level $CompressLevel
 
-    Write-Verbose "Removing $OVAPath because of completed compression"
-    Remove-Item ($OVAPath) -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
-}
-else
-{
-    Write-Verbose "Copying the exported $OVA to $Destination"
-    Copy-Item ($OVAPath) -Destination "($Destination + "\" + $OVA)" -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
-	
-    Write-Verbose "Removing $OVAPath because of completed copy"
-    Remove-Item ($OVAPath) -Verbose:($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+    Write-Verbose "Removing uncompressed $OVAPath because of completed compression"
+    Remove-Item $OVAPath -Force
 }
 
-Write-Verbose "Completed the Backup"
+Write-Verbose "Completed the backup"
