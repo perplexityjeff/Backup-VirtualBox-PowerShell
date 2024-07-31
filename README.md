@@ -6,7 +6,7 @@ They are being exported using the VBoxManage command line that comes with Virtua
 ## Parameters
 * VM: This is the VM name as displayed in VirtualBox itself
 * Destination: This is the folder in which the backup will be stored
-* Suffix: This gets added after the filename generated
+* Suffix: This gets added after the filename generated and is optional
 * Compress: This allow you to have compression of the backup using [7-Zip](https://www.7-zip.org/)
 * CompressExtension: This allows you to change the compression type e.g "zip" or "7z"
 * CompressLevel: This allows you to change the compression level e.g "1", "3", "5" (Default), "7", "9"
