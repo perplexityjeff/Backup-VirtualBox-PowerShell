@@ -3,6 +3,13 @@ A simple PowerShell script that allows you to backup VirtualBox machines.
 
 They are being exported using the VBoxManage command line that comes with VirtualBox. It (gently) stops the machine, takes an OVA and starts it back up. 
 
+## Usage
+Here is a simple example of the script that you use:
+`.\Backup-VirtualBox.ps1 -VM 'VM Test' -Destination D:\Backup -Compress -StartAfterBackup -Verbose`
+
+Please use Get-Help for more examples within the script:
+`Get-Help .\Backup-VirtualBox.ps1 -Examples`
+
 ## Parameters
 * VM: This is the VM name as displayed in VirtualBox itself
 * Destination: This is the folder in which the backup will be stored
