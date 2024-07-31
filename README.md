@@ -7,9 +7,9 @@ They are being exported using the VBoxManage command line that comes with Virtua
 * VM: This is the VM name as displayed in VirtualBox itself
 * Destination: This is the folder in which the backup will be stored
 * Suffix: This gets added after the filename generated
-* Compress: This allow you to have compression of the backup using 7zip
-* CompressExtension: This allows you to change the compression type e.g zip or 7z
-* CompressLevel: This allows you to change the compression level e.g 1, 3, 5 (Default), 7, 9
+* Compress: This allow you to have compression of the backup using [7-Zip](https://www.7-zip.org/)
+* CompressExtension: This allows you to change the compression type e.g "zip" or "7z"
+* CompressLevel: This allows you to change the compression level e.g "1", "3", "5" (Default), "7", "9"
 * StartAfterBackup: This allows you to start the VM back up after the backup
 * Force: This is used to tell VirtualBox to force shutdown (poweroff) the VM instead of acpipowerbutton method
 
