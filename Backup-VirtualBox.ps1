@@ -47,15 +47,28 @@ https://www.dotnetperls.com/7-zip-examples
 [CmdletBinding()]
 Param
 (
-    [Parameter(Mandatory=$true)][String]$VM = "",
-    [Parameter(Mandatory=$true)][String]$Destination = "C:\Users\" + $env:UserName + "\Documents\",
-    [String]$Suffix,
-    [Switch]$Compress,
-    [String]$CompressExtension = "zip",
-    [String]$CompressLevel = "5",    
-    [Switch]$StartAfterBackup,
-    [switch]$Force = $False
+    [Parameter(Mandatory=$true)][String]$VM,
+    [Parameter(ParameterSetName="FullBackup", Mandatory=$true)][String]$Destination = "C:\Users\" + $env:UserName + "\Documents\",
+    [Parameter(ParameterSetName="FullBackup")][String]$Suffix,
+    [Parameter(ParameterSetName="FullBackup")][Switch]$Compress,
+    [Parameter(ParameterSetName="FullBackup")][String]$CompressExtension = "zip",
+    [Parameter(ParameterSetName="FullBackup")][String]$CompressLevel = "5",    
+    [Parameter(ParameterSetName="FullBackup")][Switch]$StartAfterBackup,
+    [Parameter(ParameterSetName="FullBackup")][switch]$Force = $False,
+    [Parameter(ParameterSetName="Snapshot", Mandatory=$true)][switch]$Snapshot,
+    [Parameter()][string]$Keep
 )
+
+$VBoxManage = "$($Env:ProgramFiles)\Oracle\VirtualBox\VBoxManage.exe"
+$Date = Get-Date -format "yyyyMMdd-HHmmss"
+
+$OVA = "$VM-$Date"
+$OVAExtension = ".ova"
+if ($Suffix)
+{
+    $OVA = "$VM-$Date-$Suffix"
+}
+$OVAPath = Join-Path -Path $Destination -ChildPath ($OVA + $OVAExtension)
 
 function New-7ZipArchive()
 {
@@ -73,9 +86,9 @@ function New-7ZipArchive()
     Start-Process $7ZipLocation -ArgumentList $7ZipArguments -Wait -WindowStyle Hidden
 }
 
-function Get-RunningVirtualBox($VM)
+function Get-RunningVM($VM)
 {
-    $VBoxManage = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
+    $VBoxManage = "$($Env:ProgramFiles)\Oracle\VirtualBox\VBoxManage.exe"
 
     $pinfo = New-Object System.Diagnostics.ProcessStartInfo
     $pinfo.FileName = $VBoxManage
@@ -96,18 +109,63 @@ function Get-RunningVirtualBox($VM)
     }
 }
 
-$Date = Get-Date -format "yyyyMMdd-HHmmss"
-$VBoxManage = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
-
-$OVA = "$VM-$Date.ova"
-if ($Suffix)
+function Get-Snapshots($VM)
 {
-    $OVA = "$VM-$Date-$Suffix.ova"
+    $VBoxManage = "$($Env:ProgramFiles)\Oracle\VirtualBox\VBoxManage.exe"
+
+    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+    $pinfo.FileName = $VBoxManage
+    $pinfo.RedirectStandardError = $true
+    $pinfo.RedirectStandardOutput = $true
+    $pinfo.UseShellExecute = $false
+    $pinfo.Arguments = "snapshot ""$VM"" list"
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $pinfo
+    $p.Start() | Out-Null
+    $p.WaitForExit() 
+    $stdout = $p.StandardOutput.ReadToEnd()
+    $stderr = $p.StandardError.ReadToEnd()
+
+    $snapshots = $stdout | Select-String -Pattern "Name:(.*?)\(UUID" -AllMatches | Foreach-Object { $_.Matches} | ForEach-Object { $_.Groups[1].Value.Trim() }
+
+    return $snapshots
 }
 
-$OVAPath = Join-Path -Path $Destination -ChildPath $OVA
+if ($Snapshot)
+{   
+    if (Get-RunningVM($VM))
+    {
+        Write-Verbose "Taking new snapshot of $VM, be patient can take a while"
+        Start-Process $VBoxManage -ArgumentList "snapshot ""$VM"" take ""$OVA"" --live" -Wait -WindowStyle Hidden
 
-if (Get-RunningVirtualBox($VM))
+        if ($Keep)
+        {   
+            Write-Verbose "Checking for snapshots olders then $Keep day(s) that can be removed for $VM"
+            $SnapshotStorage = Get-Snapshots($VM)
+            if ($SnapshotStorage)
+            {
+                Foreach($Snap in $SnapshotStorage)
+                {
+                    $SnapDate = [datetime]::parseexact($Snap.Split("$VM-")[1], "yyyyMMdd-HHmmss", $null)
+                    if ((New-TimeSpan -Start $SnapDate -End (Get-Date)).Minutes -gt $Keep)
+                    {
+                        Write-Verbose "Removing old $VM snapshot $Snap"
+                        Start-Process $VBoxManage -ArgumentList "snapshot ""$VM"" delete ""$Snap""" -Wait -WindowStyle Hidden
+                    }
+                }
+            }
+        }
+    }
+    else 
+    {
+        Write-Error "$VM was not running, snapshot command could not be performed"
+    }
+
+    Write-Verbose "Completed the snapshot"
+    Exit
+}
+
+if (Get-RunningVM($VM))
 {
     if ($Force)
     {
@@ -120,7 +178,7 @@ if (Get-RunningVirtualBox($VM))
         Start-Process $VBoxManage -ArgumentList "controlvm ""$VM"" acpipowerbutton" -Wait -WindowStyle Hidden
     }
    
-    While(Get-RunningVirtualBox($VM))
+    While(Get-RunningVM($VM))
     {
         Write-Verbose "Waiting for $VM to have stopped"
         Start-Sleep -Seconds 1
@@ -133,13 +191,13 @@ if (-Not(Test-Path $Destination))
     New-Item -Path $Destination -ItemType Directory | Out-Null
 }
 
-Write-Verbose "Checking if $OVA already exists and removing it before beginning"
+Write-Verbose "Checking if $OVAPath already exists and removing it before beginning"
 if (Test-Path $OVAPath)
 {
     Remove-Item $OVAPath -Force
 }
 
-Write-Verbose "Exporting the VM appliance of $VM as $OVA, be patient this will take a while"
+Write-Verbose "Exporting the VM appliance of $VM to $OVAPath, be patient can take a while"
 Start-Process $VBoxManage -ArgumentList "export ""$VM"" -o ""$OVAPath""" -Wait -WindowStyle Hidden -RedirectStandardOutput True
 
 if ($StartAfterBackup)
@@ -158,7 +216,7 @@ if ($Compress)
         Remove-Item $DestinationCompress -Force
     }
 
-    Write-Verbose "Starting the compression of $OVA to $DestinationCompress"
+    Write-Verbose "Starting the compression of $OVAPath to $DestinationCompress"
     New-7ZipArchive -SourceFile $OVAPath -DestinationFile $DestinationCompress -Extention $CompressExtension -Level $CompressLevel
 
     Write-Verbose "Removing uncompressed $OVAPath because of completed compression"
