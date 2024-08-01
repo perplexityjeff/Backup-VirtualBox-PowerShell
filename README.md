@@ -26,8 +26,8 @@ Please use Get-Help for more examples within the script:
 * Snapshot: This is a switch to get into snapshot mode. This does not save it to a destination thus not a backup
 * Keep: This allows you to specify the amount of days of snapshots to keep, older snapshots will be deleted. This function is optional
 
-## Filename of backups
-The filename of the backup by default is the VM name and a date timestamp (yyyyMMdd-HHmmss). Using the optional Suffix parameter you can add something after that, for example "Daily". 
+## Filenames
+The filename of the backup or snapshots by default is the VM name and a date timestamp (yyyyMMdd-HHmmss). Using the optional Suffix parameter for backups you can add something after that, for example "Daily". 
 
 ## Prerequisite
 * [7-Zip](https://www.7-zip.org/) is needed to do the compression if you should choose that option from the script this is done because the archiving functions of .NET do not allow archiving of large files. 
