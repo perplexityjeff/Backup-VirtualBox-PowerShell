@@ -71,6 +71,11 @@ $VBoxManage = "$($Env:ProgramFiles)\Oracle\VirtualBox\VBoxManage.exe"
 $Date = Get-Date -format "yyyyMMdd-HHmmss"
 
 $OVA = "$VM-$Date"
+if ($Suffix)
+{
+    $OVA = "$VM-$Date-$Suffix"
+}
+$OVAPath = Join-Path -Path $Destination -ChildPath ($OVA + $OVAExtension)
 $OVAExtension = ".ova"
 
 function New-7ZipArchive()
@@ -150,7 +155,7 @@ if ($Snapshot)
                 Foreach($Snap in $SnapshotStorage)
                 {
                     $SnapDate = [datetime]::parseexact($Snap.Split("$VM-")[1], "yyyyMMdd-HHmmss", $null)
-                    if ((New-TimeSpan -Start $SnapDate -End (Get-Date)).Minutes -gt $Keep)
+                    if ((New-TimeSpan -Start $SnapDate -End (Get-Date)).Days -gt $Keep)
                     {
                         Write-Verbose "Removing old $VM snapshot $Snap"
                         Start-Process $VBoxManage -ArgumentList "snapshot ""$VM"" delete ""$Snap""" -Wait -WindowStyle Hidden
@@ -167,12 +172,6 @@ if ($Snapshot)
     Write-Verbose "Completed the snapshot"
     Exit
 }
-
-if ($Suffix)
-{
-    $OVA = "$VM-$Date-$Suffix"
-}
-$OVAPath = Join-Path -Path $Destination -ChildPath ($OVA + $OVAExtension)
 
 if (Get-RunningVM($VM))
 {
@@ -225,7 +224,7 @@ if ($Compress)
         Remove-Item $DestinationCompress -Force
     }
 
-    Write-Verbose "Starting the compression of $OVAPath to $DestinationCompress"
+    Write-Verbose "Starting the compression of $OVAPath to $DestinationCompress, be patient can take a while"
     New-7ZipArchive -SourceFile $OVAPath -DestinationFile $DestinationCompress -Extention $CompressExtension -Level $CompressLevel
 
     Write-Verbose "Removing uncompressed $OVAPath because of completed compression"
