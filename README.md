@@ -13,6 +13,8 @@ Please use Get-Help for more examples within the script:
 `Get-Help .\Backup-VirtualBox.ps1 -Examples`
 
 ## Mode: FullBackup
+This mode is shutting down the VM (gracefully) and exporting the VM to a OVA. 
+
 * VM: This is the VM name as displayed in VirtualBox itself
 * Destination: This is the folder in which the backup will be stored
 * Suffix: This gets added after the filename generated
@@ -23,6 +25,8 @@ Please use Get-Help for more examples within the script:
 * Force: This is used to tell VirtualBox to force shutdown (poweroff) the VM instead of acpipowerbutton method
 
 ## Mode: Snapshot
+This only creates a snapshot of the VM 
+
 * Snapshot: This is a switch to get into snapshot mode. This does not save it to a destination thus not a backup
 * Keep: This allows you to specify the amount of days of snapshots to keep, older snapshots will be deleted. This function is optional
 
