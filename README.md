@@ -12,15 +12,19 @@ Please use Get-Help for more examples within the script:
 
 `Get-Help .\Backup-VirtualBox.ps1 -Examples`
 
-## Parameters
+## Parameters: FullBackup
 * VM: This is the VM name as displayed in VirtualBox itself
 * Destination: This is the folder in which the backup will be stored
-* Suffix: This gets added after the filename generated and is optional
+* Suffix: This gets added after the filename generated
 * Compress: This allow you to have compression of the backup using [7-Zip](https://www.7-zip.org/)
-* CompressExtension: This allows you to change the compression type e.g "zip" or "7z"
+* CompressExtension: This allows you to change the compression type e.g "zip" or "7z" and is optional
 * CompressLevel: This allows you to change the compression level e.g "1", "3", "5" (Default), "7", "9"
 * StartAfterBackup: This allows you to start the VM back up after the backup
 * Force: This is used to tell VirtualBox to force shutdown (poweroff) the VM instead of acpipowerbutton method
+
+## Parameters: Snapshot
+* Snapshot: This is a switch to get into snapshot mode. This does not save it to a destination thus not a backup
+* Keep: This allows you to specify the amount of days of snapshots to keep, older snapshots will be deleted. This function is optional
 
 ## Filename of backups
 The filename of the backup by default is the VM name and a date timestamp (yyyyMMdd-HHmmss). Using the optional Suffix parameter you can add something after that, for example "Daily". 
