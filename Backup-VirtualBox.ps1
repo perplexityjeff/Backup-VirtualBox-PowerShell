@@ -72,7 +72,6 @@ $Date = Get-Date -format "yyyyMMdd-HHmmss"
 
 $OVA = "$VM-$Date"
 $OVAExtension = ".ova"
-$OVAPath = Join-Path -Path $Destination -ChildPath ($OVA + $OVAExtension)
 
 function New-7ZipArchive()
 {
@@ -173,6 +172,7 @@ if ($Suffix)
 {
     $OVA = "$VM-$Date-$Suffix"
 }
+$OVAPath = Join-Path -Path $Destination -ChildPath ($OVA + $OVAExtension)
 
 if (Get-RunningVM($VM))
 {
