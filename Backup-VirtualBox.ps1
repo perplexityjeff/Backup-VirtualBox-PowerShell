@@ -72,10 +72,6 @@ $Date = Get-Date -format "yyyyMMdd-HHmmss"
 
 $OVA = "$VM-$Date"
 $OVAExtension = ".ova"
-if ($Suffix)
-{
-    $OVA = "$VM-$Date-$Suffix"
-}
 $OVAPath = Join-Path -Path $Destination -ChildPath ($OVA + $OVAExtension)
 
 function New-7ZipArchive()
@@ -171,6 +167,11 @@ if ($Snapshot)
 
     Write-Verbose "Completed the snapshot"
     Exit
+}
+
+if ($Suffix)
+{
+    $OVA = "$VM-$Date-$Suffix"
 }
 
 if (Get-RunningVM($VM))
