@@ -33,6 +33,14 @@ Basic example to backup the VM to a folder and use 7z archiving with 7zip with m
 Basic example to backup the VM to a folder and start the VM back up after exporting
 .\Backup-VirtualBox.ps1 -VM 'TESTVM' -Destination D:\Test\TESTVM -Compress -StartAfterBackup -Verbose
 
+.EXAMPLE
+Basic example to only create a snapshot of the VM, this does not delete snapshots
+.\Backup-VirtualBox.ps1 -VM 'TESTVM' -Snapshot -Verbose
+
+.EXAMPLE
+Basic example to only create a snapshot of the VM and delete snapshots that are older then 30 days
+.\Backup-VirtualBox.ps1 -VM 'TESTVM' -Snapshot -Keep 30 -Verbose
+
 .LINK
 https://www.techrepublic.com/article/how-to-import-and-export-virtualbox-appliances-from-the-command-line/
 https://www.virtualbox.org/manual/ch08.html
@@ -56,7 +64,7 @@ Param
     [Parameter(ParameterSetName="FullBackup")][Switch]$StartAfterBackup,
     [Parameter(ParameterSetName="FullBackup")][switch]$Force = $False,
     [Parameter(ParameterSetName="Snapshot", Mandatory=$true)][switch]$Snapshot,
-    [Parameter()][string]$Keep
+    [Parameter(ParameterSetName="Snapshot")][string]$Keep
 )
 
 $VBoxManage = "$($Env:ProgramFiles)\Oracle\VirtualBox\VBoxManage.exe"
