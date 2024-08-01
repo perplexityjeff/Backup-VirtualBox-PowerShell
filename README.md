@@ -25,8 +25,9 @@ This mode is shutting down the VM (gracefully) and exporting the VM to a OVA.
 * Force: This is used to tell VirtualBox to force shutdown (poweroff) the VM instead of acpipowerbutton method
 
 ## Mode: Snapshot
-This only creates a snapshot of the VM 
+This only creates a snapshot of the VM
 
+* VM: This is the VM name as displayed in VirtualBox itself
 * Snapshot: This is a switch to get into snapshot mode. This does not save it to a destination thus not a backup
 * Keep: This allows you to specify the amount of days of snapshots to keep, older snapshots will be deleted. This function is optional
 
